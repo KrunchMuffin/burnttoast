@@ -1,6 +1,6 @@
 ﻿# Helper function to inject arbitrary objects into a pipeline stream
 function Add-PipelineObject {
-    [cmdletBinding()]
+    [CmdletBinding()]
     param (
         [Parameter(Mandatory,
                    ValueFromPipeline)]

@@ -1,11 +1,15 @@
 function Get-BTScriptBlockHash {
     <#
         .SYNOPSIS
-        Returns a normalized SHA256 hash for a ScriptBlock.
+        Returns a SHA256 hash for a ScriptBlock based on its source text.
 
         .DESCRIPTION
-        Converts the ScriptBlock to string, collapses whitespace, trims, lowercases, and returns SHA256 hash.
-        Used to uniquely identify ScriptBlocks for event registration scenarios.
+        Hashes the exact source text of the ScriptBlock (the result of ToString()).
+        Two ScriptBlocks with byte-identical source produce the same hash; any difference in
+        whitespace, casing, or punctuation produces a different hash.
+
+        Used to derive a stable SourceIdentifier for event registration so that registering the
+        "same" handler twice does not create duplicate subscriptions.
 
         .PARAMETER ScriptBlock
         The [scriptblock] to hash.
@@ -20,16 +24,19 @@ function Get-BTScriptBlockHash {
         $hash = Get-BTScriptBlockHash { Write-Host 'Hello' }
     #>
     [CmdletBinding()]
+    [OutputType([string])]
     param (
         [Parameter(Mandatory, ValueFromPipeline)]
         [scriptblock]$ScriptBlock
     )
     process {
-        # Remove all whitespace and semicolons for robust logical identity
-        $normalized = ($ScriptBlock.ToString() -replace '[\s;]+', '').ToLowerInvariant()
-        $bytes = [System.Text.Encoding]::UTF8.GetBytes($normalized)
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes($ScriptBlock.ToString())
         $sha = [System.Security.Cryptography.SHA256]::Create()
-        $hashBytes = $sha.ComputeHash($bytes)
+        try {
+            $hashBytes = $sha.ComputeHash($bytes)
+        } finally {
+            $sha.Dispose()
+        }
         -join ($hashBytes | ForEach-Object { $_.ToString('x2') })
     }
 }

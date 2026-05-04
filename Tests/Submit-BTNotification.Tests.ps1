@@ -53,4 +53,15 @@ Describe 'Submit-BTNotification' {
             { Submit-BTNotification -Content $mockContent -Urgent -WhatIf } | Should -Not -Throw
         }
     }
+    Context 'pipeline input' {
+        It 'accepts a single ToastContent from the pipeline' {
+            $mockContent = [Activator]::CreateInstance([Microsoft.Toolkit.Uwp.Notifications.ToastContent])
+            { $mockContent | Submit-BTNotification -WhatIf } | Should -Not -Throw
+        }
+        It 'accepts multiple ToastContent objects from the pipeline' {
+            $a = [Activator]::CreateInstance([Microsoft.Toolkit.Uwp.Notifications.ToastContent])
+            $b = [Activator]::CreateInstance([Microsoft.Toolkit.Uwp.Notifications.ToastContent])
+            { $a, $b | Submit-BTNotification -WhatIf } | Should -Not -Throw
+        }
+    }
 }

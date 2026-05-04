@@ -15,5 +15,16 @@ Describe 'Update-BTNotification' {
             $data = @{ Key = 'Value' }
             { Update-BTNotification -UniqueIdentifier 'ID001' -DataBinding $data -WhatIf } | Should -Not -Throw
         }
+        It 'runs without error when -DataBinding is omitted (regression: was throwing on undefined dictionary)' {
+            { Update-BTNotification -UniqueIdentifier 'ID001' -WhatIf } | Should -Not -Throw
+        }
+    }
+
+    Context 'pipeline input' {
+        It 'accepts UniqueIdentifier by property name from the pipeline' {
+            $data = @{ Key = 'Value' }
+            $obj = [pscustomobject]@{ UniqueIdentifier = 'PipedId' }
+            { $obj | Update-BTNotification -DataBinding $data -WhatIf } | Should -Not -Throw
+        }
     }
 }

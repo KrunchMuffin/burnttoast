@@ -33,4 +33,22 @@ Describe 'Remove-BTNotification' {
             { Remove-BTNotification -UniqueIdentifier 'Toast001' -WhatIf } | Should -Not -Throw
         }
     }
+
+    Context 'pipeline input' {
+        It 'accepts Tag and Group by property name from the pipeline' {
+            $obj = [pscustomobject]@{ Tag = 'PipedTag'; Group = 'PipedGroup' }
+            { $obj | Remove-BTNotification -WhatIf } | Should -Not -Throw
+        }
+        It 'accepts UniqueIdentifier by property name from the pipeline' {
+            $obj = [pscustomobject]@{ UniqueIdentifier = 'PipedId' }
+            { $obj | Remove-BTNotification -WhatIf } | Should -Not -Throw
+        }
+        It 'processes each piped object once (no extra Clear() side effect)' {
+            $items = @(
+                [pscustomobject]@{ Tag = 'A'; Group = 'G' }
+                [pscustomobject]@{ Tag = 'B'; Group = 'G' }
+            )
+            { $items | Remove-BTNotification -WhatIf } | Should -Not -Throw
+        }
+    }
 }

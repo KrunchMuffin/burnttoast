@@ -1,4 +1,4 @@
-﻿function Submit-BTNotification {
+function Submit-BTNotification {
     <#
         .SYNOPSIS
         Submits a completed toast notification for display.
@@ -10,7 +10,7 @@
         ('Green' or 'Red'), the notification will style those buttons as "Success" (green) or "Critical" (red)
         to visually distinguish positive or destructive actions where supported.
 
-        When an action ScriptBlock is supplied (Activated, Dismissed, or Failed), a normalized SHA256 hash of its content is used to generate a unique SourceIdentifier for event registration.
+        When an action ScriptBlock is supplied (Activated, Dismissed, or Failed), a SHA256 hash of its source text is used to generate a unique SourceIdentifier for event registration.
         This prevents duplicate handler registration for the same ScriptBlock, warning if a duplicate registration is attempted.
 
         If the -ReturnEventData switch is used and any event action scriptblocks are supplied (ActivatedAction, DismissedAction, FailedAction),
@@ -55,7 +55,8 @@
         If set, designates the toast as an "Important Notification" (scenario 'urgent') which can break through Focus Assist, ensuring the notification is delivered even when user focus mode is enabled.
 
         .INPUTS
-        None. You cannot pipe input to this function.
+        Microsoft.Toolkit.Uwp.Notifications.ToastContent
+        ToastContent objects (such as those produced by New-BTContent) may be piped in.
 
         .OUTPUTS
         None. This function submits a toast but returns no objects.
@@ -64,13 +65,19 @@
         Submit-BTNotification -Content $Toast1 -UniqueIdentifier 'Toast001'
         Submits the toast content object $Toast1 and tags it with a unique identifier so it can be replaced or updated.
 
+        .EXAMPLE
+        $Toast1, $Toast2 | Submit-BTNotification
+        Submits each toast in turn from the pipeline.
+
         .LINK
         https://github.com/Windos/BurntToast/blob/main/Help/Submit-BTNotification.md
     #>
 
     [CmdletBinding(SupportsShouldProcess = $true,
                    HelpUri = 'https://github.com/Windos/BurntToast/blob/main/Help/Submit-BTNotification.md')]
+    [OutputType([void])]
     param (
+        [Parameter(Mandatory, ValueFromPipeline)]
         [Microsoft.Toolkit.Uwp.Notifications.ToastContent] $Content,
         [uint64] $SequenceNumber,
         [string] $UniqueIdentifier,
@@ -85,202 +92,206 @@
         [string] $EventDataVariable = 'ToastEvent'
     )
 
-    if (-not $IsWindows) {
-        $null = [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime]
+    begin {
+        if (-not $IsWindows) {
+            $null = [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime]
+        }
+        $CompatMgr = [Microsoft.Toolkit.Uwp.Notifications.ToastNotificationManagerCompat]
     }
 
-    $ToastXml = [Windows.Data.Xml.Dom.XmlDocument]::new()
+    process {
+        $ToastXml = [Windows.Data.Xml.Dom.XmlDocument]::new()
 
-    $ToastXmlContent = $Content.GetContent()
+        $ToastXmlContent = $Content.GetContent()
 
-    if (-not $DataBinding) {
-        $ToastXmlContent = $ToastXmlContent -replace '<text(.*?)>{', '<text$1>'
-        $ToastXmlContent = $ToastXmlContent.Replace('}</text>', '</text>')
-        $ToastXmlContent = $ToastXmlContent.Replace('="{', '="')
-        $ToastXmlContent = $ToastXmlContent.Replace('}" ', '" ')
-    }
+        if (-not $DataBinding) {
+            $ToastXmlContent = $ToastXmlContent -replace '<text(.*?)>{', '<text$1>'
+            $ToastXmlContent = $ToastXmlContent.Replace('}</text>', '</text>')
+            $ToastXmlContent = $ToastXmlContent.Replace('="{', '="')
+            $ToastXmlContent = $ToastXmlContent.Replace('}" ', '" ')
+        }
 
-    $ToastXml.LoadXml($ToastXmlContent)
+        $ToastXml.LoadXml($ToastXmlContent)
 
-    if ($Urgent) {
-        try {$ToastXml.GetElementsByTagName('toast')[0].SetAttribute('scenario', 'urgent')} catch {}
-    }
+        if ($Urgent) {
+            try { $ToastXml.GetElementsByTagName('toast')[0].SetAttribute('scenario', 'urgent') } catch { }
+        }
 
-    if ($ToastXml.GetElementsByTagName('toast')[0].GetAttribute('scenario') -eq 'incomingCall') {
-        foreach ($BindingElement in $ToastXml.GetElementsByTagName('binding')[0].ChildNodes) {
-            if ($BindingElement.TagName -eq 'text') {
-                $BindingElement.SetAttribute('hint-callScenarioCenterAlign', 'true')
+        if ($ToastXml.GetElementsByTagName('toast')[0].GetAttribute('scenario') -eq 'incomingCall') {
+            foreach ($BindingElement in $ToastXml.GetElementsByTagName('binding')[0].ChildNodes) {
+                if ($BindingElement.TagName -eq 'text') {
+                    $BindingElement.SetAttribute('hint-callScenarioCenterAlign', 'true')
+                }
             }
         }
-    }
 
-    if ($ToastXml.GetXml() -match 'hint-actionId="(Red|Green)"') {
-        try {$ToastXml.GetElementsByTagName('toast').SetAttribute('useButtonStyle', 'true')} catch {}
+        if ($ToastXml.GetXml() -match 'hint-actionId="(Red|Green)"') {
+            try { $ToastXml.GetElementsByTagName('toast').SetAttribute('useButtonStyle', 'true') } catch { }
 
-        foreach ($ActionElement in $ToastXml.GetElementsByTagName('actions')[0].ChildNodes) {
-            if ($ActionElement.GetAttribute('hint-actionId') -eq 'Red') {
-                $ActionElement.SetAttribute('hint-buttonStyle', 'Critical')
-            }
-            if ($ActionElement.GetAttribute('hint-actionId') -eq 'Green') {
-                $ActionElement.SetAttribute('hint-buttonStyle', 'Success')
+            foreach ($ActionElement in $ToastXml.GetElementsByTagName('actions')[0].ChildNodes) {
+                if ($ActionElement.GetAttribute('hint-actionId') -eq 'Red') {
+                    $ActionElement.SetAttribute('hint-buttonStyle', 'Critical')
+                }
+                if ($ActionElement.GetAttribute('hint-actionId') -eq 'Green') {
+                    $ActionElement.SetAttribute('hint-buttonStyle', 'Success')
+                }
             }
         }
-    }
 
-    $Toast = [Windows.UI.Notifications.ToastNotification]::new($ToastXml)
-
-    if ($DataBinding) {
-        $DataDictionary = New-Object 'system.collections.generic.dictionary[string,string]'
+        $Toast = [Windows.UI.Notifications.ToastNotification]::new($ToastXml)
 
         if ($DataBinding) {
+            $DataDictionary = New-Object 'system.collections.generic.dictionary[string,string]'
+
             foreach ($Key in $DataBinding.Keys) {
                 $DataDictionary.Add($Key, $DataBinding.$Key)
             }
-        }
 
-        foreach ($Child in $Content.Visual.BindingGeneric.Children) {
-            if ($Child.GetType().Name -eq 'AdaptiveText') {
-                $BindingName = $Child.Text.BindingName
-
-                if (!$DataDictionary.ContainsKey($BindingName)) {
-                    $DataDictionary.Add($BindingName, $BindingName)
-                }
-            } elseif ($Child.GetType().Name -eq 'AdaptiveProgressBar') {
-                if ($Child.Title) {
-                    $BindingName = $Child.Title.BindingName
+            foreach ($Child in $Content.Visual.BindingGeneric.Children) {
+                if ($Child.GetType().Name -eq 'AdaptiveText') {
+                    $BindingName = $Child.Text.BindingName
 
                     if (!$DataDictionary.ContainsKey($BindingName)) {
                         $DataDictionary.Add($BindingName, $BindingName)
                     }
-                }
+                } elseif ($Child.GetType().Name -eq 'AdaptiveProgressBar') {
+                    if ($Child.Title) {
+                        $BindingName = $Child.Title.BindingName
 
-                if ($Child.Value) {
-                    $BindingName = $Child.Value.BindingName
-
-                    if (!$DataDictionary.ContainsKey($BindingName)) {
-                        $DataDictionary.Add($BindingName, $BindingName)
-                    }
-                }
-
-                if ($Child.ValueStringOverride) {
-                    $BindingName = $Child.ValueStringOverride.BindingName
-
-                    if (!$DataDictionary.ContainsKey($BindingName)) {
-                        $DataDictionary.Add($BindingName, $BindingName)
-                    }
-                }
-
-                if ($Child.Status) {
-                    $BindingName = $Child.Status.BindingName
-
-                    if (!$DataDictionary.ContainsKey($BindingName)) {
-                        $DataDictionary.Add($BindingName, $BindingName)
-                    }
-                }
-            }
-        }
-
-        $Toast.Data = [Windows.UI.Notifications.NotificationData]::new($DataDictionary)
-    }
-
-    if ($UniqueIdentifier) {
-        $Toast.Group = $UniqueIdentifier
-        $Toast.Tag = $UniqueIdentifier
-    }
-
-    if ($ExpirationTime) {
-        $Toast.ExpirationTime = $ExpirationTime
-    }
-
-    if ($SuppressPopup.IsPresent) {
-        $Toast.SuppressPopup = $SuppressPopup
-    }
-
-    if ($SequenceNumber) {
-        $Toast.Data.SequenceNumber = $SequenceNumber
-    }
-
-    $CompatMgr = [Microsoft.Toolkit.Uwp.Notifications.ToastNotificationManagerCompat]
-
-    if ($ActivatedAction -or $DismissedAction -or $FailedAction) {
-        $Action_Activated = $ActivatedAction
-        $Action_Dismissed = $DismissedAction
-        $Action_Failed = $FailedAction
-
-        if ($ReturnEventData -or $EventDataVariable -ne 'ToastEvent') {
-            $EventReturn = '$global:{0} = $Event' -f $EventDataVariable
-            if ($ActivatedAction) {
-                $Action_Activated = [ScriptBlock]::Create($EventReturn + "`n" + $Action_Activated.ToString())
-            }
-            if ($DismissedAction) {
-                $Action_Dismissed = [ScriptBlock]::Create($EventReturn + "`n" + $Action_Dismissed.ToString())
-            }
-            if ($FailedAction) {
-                $Action_Failed = [ScriptBlock]::Create($EventReturn + "`n" + $Action_Failed.ToString())
-            }
-        }
-
-        if ($Action_Activated) {
-            try {
-                $ActivatedHash = Get-BTScriptBlockHash $Action_Activated
-                $activatedParams = @{
-                    InputObject      = $CompatMgr
-                    EventName        = 'OnActivated'
-                    Action           = $Action_Activated
-                    SourceIdentifier = "BT_Activated_$ActivatedHash"
-                    ErrorAction      = 'Stop'
-                }
-                Register-ObjectEvent @activatedParams | Out-Null
-            } catch {
-                Write-Warning "Duplicate or conflicting OnActivated ScriptBlock event detected: Activation action not registered. $_"
-            }
-            <#
-                EDGE CASES / NOTES
-                - Hash collisions: In the rare event that two different ScriptBlocks normalize to the same text, they will share a SourceIdentifier and not both be registered.
-                - Only ScriptBlocks are handled: if a non-ScriptBlock is supplied where an action is expected, registration will fail.
-                - Actions with dynamic or closure content: If `ToString()` outputs identical strings for two blocks with different closure state, only one event will register.
-                - User warnings: Any error during event registration (including duplicate) triggers a user-facing warning instead of otherwise disrupting notification flow.
-            #>
-        }
-        if ($Action_Dismissed -or $Action_Failed) {
-            if ($Script:ActionsSupported) {
-                if ($Action_Dismissed) {
-                    try {
-                        $DismissedHash = Get-BTScriptBlockHash $Action_Dismissed
-                        $dismissedParams = @{
-                            InputObject      = $Toast
-                            EventName        = 'Dismissed'
-                            Action           = $Action_Dismissed
-                            SourceIdentifier = "BT_Dismissed_$DismissedHash"
-                            ErrorAction      = 'Stop'
+                        if (!$DataDictionary.ContainsKey($BindingName)) {
+                            $DataDictionary.Add($BindingName, $BindingName)
                         }
-                        Register-ObjectEvent @dismissedParams | Out-Null
-                    } catch {
-                        Write-Warning "Duplicate or conflicting Dismissed ScriptBlock event detected: Dismissed action not registered. $_"
                     }
-                }
-                if ($Action_Failed) {
-                    try {
-                        $FailedHash = Get-BTScriptBlockHash $Action_Failed
-                        $failedParams = @{
-                            InputObject      = $Toast
-                            EventName        = 'Failed'
-                            Action           = $Action_Failed
-                            SourceIdentifier = "BT_Failed_$FailedHash"
-                            ErrorAction      = 'Stop'
+
+                    if ($Child.Value) {
+                        $BindingName = $Child.Value.BindingName
+
+                        if (!$DataDictionary.ContainsKey($BindingName)) {
+                            $DataDictionary.Add($BindingName, $BindingName)
                         }
-                        Register-ObjectEvent @failedParams | Out-Null
-                    } catch {
-                        Write-Warning "Duplicate or conflicting Failed ScriptBlock event detected: Failed action not registered. $_"
+                    }
+
+                    if ($Child.ValueStringOverride) {
+                        $BindingName = $Child.ValueStringOverride.BindingName
+
+                        if (!$DataDictionary.ContainsKey($BindingName)) {
+                            $DataDictionary.Add($BindingName, $BindingName)
+                        }
+                    }
+
+                    if ($Child.Status) {
+                        $BindingName = $Child.Status.BindingName
+
+                        if (!$DataDictionary.ContainsKey($BindingName)) {
+                            $DataDictionary.Add($BindingName, $BindingName)
+                        }
                     }
                 }
-            } else {
-                Write-Warning $Script:UnsupportedEvents
+            }
+
+            $Toast.Data = [Windows.UI.Notifications.NotificationData]::new($DataDictionary)
+        }
+
+        if ($UniqueIdentifier) {
+            $Toast.Group = $UniqueIdentifier
+            $Toast.Tag = $UniqueIdentifier
+        }
+
+        if ($ExpirationTime) {
+            $Toast.ExpirationTime = $ExpirationTime
+        }
+
+        if ($SuppressPopup.IsPresent) {
+            $Toast.SuppressPopup = $SuppressPopup
+        }
+
+        if ($SequenceNumber) {
+            $Toast.Data.SequenceNumber = $SequenceNumber
+        }
+
+        if ($ActivatedAction -or $DismissedAction -or $FailedAction) {
+            $Action_Activated = $ActivatedAction
+            $Action_Dismissed = $DismissedAction
+            $Action_Failed = $FailedAction
+
+            if ($ReturnEventData -or $EventDataVariable -ne 'ToastEvent') {
+                $EventReturn = '$global:{0} = $Event' -f $EventDataVariable
+                if ($ActivatedAction) {
+                    $Action_Activated = [ScriptBlock]::Create($EventReturn + "`n" + $Action_Activated.ToString())
+                }
+                if ($DismissedAction) {
+                    $Action_Dismissed = [ScriptBlock]::Create($EventReturn + "`n" + $Action_Dismissed.ToString())
+                }
+                if ($FailedAction) {
+                    $Action_Failed = [ScriptBlock]::Create($EventReturn + "`n" + $Action_Failed.ToString())
+                }
+            }
+
+            if ($Action_Activated) {
+                try {
+                    $ActivatedHash = Get-BTScriptBlockHash $Action_Activated
+                    $activatedParams = @{
+                        InputObject      = $CompatMgr
+                        EventName        = 'OnActivated'
+                        Action           = $Action_Activated
+                        SourceIdentifier = "BT_Activated_$ActivatedHash"
+                        ErrorAction      = 'Stop'
+                    }
+                    Register-ObjectEvent @activatedParams | Out-Null
+                } catch {
+                    Write-Warning "Duplicate or conflicting OnActivated ScriptBlock event detected: Activation action not registered. $_"
+                }
+                <#
+                    EDGE CASES / NOTES
+                    - Deduplication is by exact source text: two ScriptBlocks with byte-identical source share a
+                      SourceIdentifier and only the first registers. Whitespace and casing differences count as
+                      distinct, by design.
+                    - Closure state is invisible to ToString(): two blocks with identical text but different
+                      captured variables produce the same hash and only one registers.
+                    - Any error during registration (including duplicate) is surfaced as a Warning so that
+                      notification submission is not disrupted.
+                #>
+            }
+            if ($Action_Dismissed -or $Action_Failed) {
+                if ($Script:ActionsSupported) {
+                    if ($Action_Dismissed) {
+                        try {
+                            $DismissedHash = Get-BTScriptBlockHash $Action_Dismissed
+                            $dismissedParams = @{
+                                InputObject      = $Toast
+                                EventName        = 'Dismissed'
+                                Action           = $Action_Dismissed
+                                SourceIdentifier = "BT_Dismissed_$DismissedHash"
+                                ErrorAction      = 'Stop'
+                            }
+                            Register-ObjectEvent @dismissedParams | Out-Null
+                        } catch {
+                            Write-Warning "Duplicate or conflicting Dismissed ScriptBlock event detected: Dismissed action not registered. $_"
+                        }
+                    }
+                    if ($Action_Failed) {
+                        try {
+                            $FailedHash = Get-BTScriptBlockHash $Action_Failed
+                            $failedParams = @{
+                                InputObject      = $Toast
+                                EventName        = 'Failed'
+                                Action           = $Action_Failed
+                                SourceIdentifier = "BT_Failed_$FailedHash"
+                                ErrorAction      = 'Stop'
+                            }
+                            Register-ObjectEvent @failedParams | Out-Null
+                        } catch {
+                            Write-Warning "Duplicate or conflicting Failed ScriptBlock event detected: Failed action not registered. $_"
+                        }
+                    }
+                } else {
+                    Write-Warning $Script:UnsupportedEvents
+                }
             }
         }
-    }
 
-    if($PSCmdlet.ShouldProcess( "submitting: [$($Toast.GetType().Name)] with Id $UniqueIdentifier, Sequence Number $($Toast.Data.SequenceNumber) and XML: $($Content.GetContent())")) {
-        $CompatMgr::CreateToastNotifier().Show($Toast)
+        if ($PSCmdlet.ShouldProcess("submitting: [$($Toast.GetType().Name)] with Id $UniqueIdentifier, Sequence Number $($Toast.Data.SequenceNumber) and XML: $($Content.GetContent())")) {
+            $CompatMgr::CreateToastNotifier().Show($Toast)
+        }
     }
 }

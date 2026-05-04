@@ -1,4 +1,4 @@
-﻿function Update-BTNotification {
+function Update-BTNotification {
     <#
         .SYNOPSIS
         Updates an existing toast notification.
@@ -6,6 +6,10 @@
         .DESCRIPTION
         The Update-BTNotification function updates a toast notification by matching UniqueIdentifier and replacing or updating its contents/data.
         DataBinding provides the values to update in the notification, and SequenceNumber ensures correct ordering if updates overlap.
+
+        UniqueIdentifier accepts pipeline input by property name, so toasts returned from Get-BTHistory can be piped in:
+
+            Get-BTHistory | Update-BTNotification -DataBinding @{ Status = 'Done' }
 
         .PARAMETER SequenceNumber
         Used for notification versioning; higher numbers indicate newer content to prevent out-of-order display.
@@ -17,7 +21,8 @@
         Hashtable containing the data binding keys/values to update.
 
         .INPUTS
-        None. You cannot pipe input to this function.
+        Microsoft.Toolkit.Uwp.Notifications.ToastNotification
+        Objects with a UniqueIdentifier (or matching Tag/Group) property may be piped in.
 
         .OUTPUTS
         None.
@@ -33,32 +38,39 @@
 
     [CmdletBinding(SupportsShouldProcess = $true,
                    HelpUri = 'https://github.com/Windos/BurntToast/blob/main/Help/Update-BTNotification.md')]
-    [CmdletBinding()]
+    [OutputType([void])]
     param (
         [uint64] $SequenceNumber,
+
+        [Parameter(ValueFromPipelineByPropertyName)]
         [string] $UniqueIdentifier,
+
         [hashtable] $DataBinding
     )
 
-    if (-not $IsWindows) {
-        $null = [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime]
-    }
-
-    if ($DataBinding) {
-        $DataDictionary = New-Object 'system.collections.generic.dictionary[string,string]'
-
-        foreach ($Key in $DataBinding.Keys) {
-            $DataDictionary.Add($Key, $DataBinding.$Key)
+    begin {
+        if (-not $IsWindows) {
+            $null = [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime]
         }
     }
 
-    $ToastData = [Windows.UI.Notifications.NotificationData]::new($DataDictionary)
+    process {
+        $DataDictionary = New-Object 'system.collections.generic.dictionary[string,string]'
 
-    if ($SequenceNumber) {
-        $ToastData.SequenceNumber = $SequenceNumber
-    }
+        if ($DataBinding) {
+            foreach ($Key in $DataBinding.Keys) {
+                $DataDictionary.Add($Key, $DataBinding.$Key)
+            }
+        }
 
-    if($PSCmdlet.ShouldProcess("UniqueId: $UniqueIdentifier", 'Updating notification')) {
-        [Microsoft.Toolkit.Uwp.Notifications.ToastNotificationManagerCompat]::CreateToastNotifier().Update($ToastData, $UniqueIdentifier, $UniqueIdentifier)
+        $ToastData = [Windows.UI.Notifications.NotificationData]::new($DataDictionary)
+
+        if ($SequenceNumber) {
+            $ToastData.SequenceNumber = $SequenceNumber
+        }
+
+        if ($PSCmdlet.ShouldProcess("UniqueId: $UniqueIdentifier", 'Updating notification')) {
+            [Microsoft.Toolkit.Uwp.Notifications.ToastNotificationManagerCompat]::CreateToastNotifier().Update($ToastData, $UniqueIdentifier, $UniqueIdentifier)
+        }
     }
 }

@@ -104,6 +104,7 @@
     [CmdletBinding(DefaultParameterSetName = 'Sound',
                    SupportsShouldProcess = $true,
                    HelpUri = 'https://github.com/Windos/BurntToast/blob/main/Help/New-BurntToastNotification.md')]
+    [OutputType([void])]
     param (
         [ValidateCount(0, 3)]
         [String[]] $Text = 'Default Notification',

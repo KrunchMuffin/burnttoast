@@ -1,14 +1,13 @@
 ﻿@{
     RootModule        = 'BurntToast.psm1'
-    ModuleVersion     = '1.1.0'
-    # Can only use CompatiblePSEditions if PowerShellVersion is set to 5.1, not sure about limiting this to that version yet.
-    # CompatiblePSEditions = @('Desktop')
+    ModuleVersion     = '2.0.0'
+    CompatiblePSEditions = @('Core')
     GUID              = '751a2aeb-a68f-422e-a2ea-376bdd81612a'
     Author            = 'Joshua (Windos) King'
     CompanyName       = 'king.geek.nz'
     Copyright         = '(c) 2015 Joshua (Windos) King. All rights reserved.'
     Description       = 'Module for creating and displaying Toast Notifications on Microsoft Windows 10.'
-    PowerShellVersion = '5.0'
+    PowerShellVersion = '7.2'
     FunctionsToExport = 'Get-BTHeader',
                         'Get-BTHistory',
                         'New-BTAction',
@@ -38,7 +37,23 @@
             LicenseUri   = 'https://github.com/Windos/BurntToast/blob/main/LICENSE'
             ProjectUri   = 'https://github.com/Windos/BurntToast'
             IconUri      = 'https://rawcdn.githack.com/Windos/BurntToast/3dd8dd7457552056da4bbd27880f8283e1116395/Media/BurntToast-Logo.png'
-            ReleaseNotes = '# 1.1.0
+            ReleaseNotes = '# 2.0.0
+
+* Breaking Changes
+  * Minimum PowerShell version is now 7.2 (LTS, Core edition only). Windows PowerShell 5.1 is no longer supported.
+* Features and Improvements
+  * Pipeline support: Submit-BTNotification, Update-BTNotification, and Remove-BTNotification now accept input from the pipeline. This enables idioms like ``Get-BTHistory | Where-Object Status -eq ''Dismissed'' | Remove-BTNotification`` and ``$content | Submit-BTNotification``.
+  * All public cmdlets now declare ``[OutputType(...)]`` for tooling and discoverability.
+  * Get-BTScriptBlockHash now hashes the raw ScriptBlock text rather than a lossy normalized form, eliminating a class of hash collisions where visually different blocks were treated as duplicates.
+* Bug Fixes
+  * Update-BTNotification: removed duplicate ``[CmdletBinding()]`` decorator that was overriding ``SupportsShouldProcess`` and ``HelpUri``.
+  * Update-BTNotification: no longer throws when called without ``-DataBinding``.
+  * Optimize-BTImageSource: failures during remote/UNC fetch now warn and fall back instead of throwing.
+* CI and Repository
+  * Dropped Windows PowerShell CI jobs (matrix is now PowerShell 7 x64 + x86).
+  * Added .editorconfig and CONTRIBUTING.md.
+
+# 1.1.0
 
 * Features and Improvements
   * Add support for Important Notifications using the Urgent switch.

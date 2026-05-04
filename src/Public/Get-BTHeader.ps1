@@ -42,8 +42,9 @@ function Get-BTHeader {
         https://github.com/Windos/BurntToast/blob/main/Help/Get-BTHeader.md
     #>
 
-    [cmdletBinding(DefaultParametersetName = 'All',
-                   HelpUri='https://github.com/Windos/BurntToast/blob/main/Help/Get-BTHeader.md')]
+    [CmdletBinding(DefaultParameterSetName = 'All',
+                   HelpUri = 'https://github.com/Windos/BurntToast/blob/main/Help/Get-BTHeader.md')]
+    [OutputType([Microsoft.Toolkit.Uwp.Notifications.ToastHeader])]
     param (
         [Parameter(Mandatory,
                    ParametersetName = 'ByToastId')]

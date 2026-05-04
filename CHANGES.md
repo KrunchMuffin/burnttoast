@@ -1,5 +1,45 @@
 # Full Change Log
 
+- v2.0.0 (unreleased)
+
+  - Breaking Changes
+
+    - Minimum PowerShell version is now 7.2 (current LTS, Core edition only). Windows PowerShell 5.1 is no longer supported. The manifest reflects this via `PowerShellVersion = '7.2'` and `CompatiblePSEditions = @('Core')`.
+
+  - Features and Improvements
+
+    - Pipeline support for the mutating cmdlets:
+
+      - `Submit-BTNotification` now accepts `ToastContent` from the pipeline. Idiom: `$content | Submit-BTNotification` and `$a, $b | Submit-BTNotification`.
+
+      - `Remove-BTNotification` now accepts `Tag`, `Group`, and `UniqueIdentifier` by property name. Idiom: `Get-BTHistory | Where-Object Status -eq 'Dismissed' | Remove-BTNotification`.
+
+      - `Update-BTNotification` now accepts `UniqueIdentifier` by property name.
+
+    - All public cmdlets now declare `[OutputType(...)]` for tooling and discoverability.
+
+    - `Get-BTScriptBlockHash` now hashes the raw ScriptBlock source text rather than a lossy whitespace/case-collapsed form. This eliminates a class of false-positive hash collisions where visually different blocks were treated as duplicates. Whitespace and casing differences now correctly produce distinct hashes.
+
+  - Bug Fixes
+
+    - `Update-BTNotification` had a duplicate `[CmdletBinding()]` decorator that was overriding the first one's `SupportsShouldProcess` and `HelpUri`. Removed.
+
+    - `Update-BTNotification` would throw when called without `-DataBinding` because `$DataDictionary` was only initialised inside the conditional branch. Always initialised now.
+
+    - `Remove-BTNotification` had a control-flow bug where passing only `-UniqueIdentifier` would remove the targeted toast and then fall through to the `else` branch, calling `History.Clear()` on every other notification. Reorganised the conditionals so each parameter set takes exactly one path.
+
+    - `Optimize-BTImageSource` would throw an unhandled exception if a remote (HTTP/UNC) image fetch failed. Now warns and falls back to no-image, matching the behaviour for missing local files.
+
+    - Casing inconsistency: three files used `[cmdletBinding()]` (lowercase 'c'). Standardised to `[CmdletBinding()]`.
+
+  - CI and Repository
+
+    - Dropped the Windows PowerShell CI jobs (matrix is now PowerShell 7 x64 + x86). Resolves the `TODO` comment about hardcoded `syswow64` paths.
+
+    - Added `.editorconfig` to standardise indentation, line endings, and encoding across contributors.
+
+    - Added `CONTRIBUTING.md` covering setup, tests, style, and PR conventions.
+
 - [v1.1.0](https://github.com/Windos/BurntToast/releases/download/v1.1.0/BurntToast.zip)
 
   - Features and Improvements

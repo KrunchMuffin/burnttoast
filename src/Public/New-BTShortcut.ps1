@@ -52,6 +52,7 @@ function New-BTShortcut {
     for actionable toast notifications. This works for pwsh.exe (PowerShell 7+), powershell.exe (Windows PowerShell), or any compatible host.
 #>
     [CmdletBinding(SupportsShouldProcess = $true, DefaultParameterSetName = "Dynamic", HelpUri = 'https://github.com/Windos/BurntToast/blob/main/Help/New-BTShortcut.md')]
+    [OutputType([void])]
     param(
         [Parameter(Mandatory=$true, ParameterSetName="Dynamic")]
         [Parameter(Mandatory=$true, ParameterSetName="ForceWindowsPowerShell")]
@@ -85,23 +86,12 @@ function New-BTShortcut {
         $WScriptShell = New-Object -ComObject WScript.Shell
         $Shortcut = $WScriptShell.CreateShortcut($ShortcutPath)
 
-        if ($PSCmdlet.ParameterSetName -eq 'ExecutablePath') {
-            $Shortcut.TargetPath = $ExecutablePath
-            $Shortcut.Arguments = "-NoExit"
-        } elseif ($PSCmdlet.ParameterSetName -eq 'ForceWindowsPowerShell') {
-            $Shortcut.TargetPath = (Get-Command powershell.exe).Source
-            $Shortcut.Arguments = "-NoExit"
-        } else {
-            # Default behavior: pwsh.exe if found, else powershell.exe
-            $pwsh = Get-Command pwsh.exe -ErrorAction SilentlyContinue
-            if ($pwsh) {
-                $Shortcut.TargetPath = $pwsh.Source
-                $Shortcut.Arguments = "-NoExit"
-            } else {
-                $Shortcut.TargetPath = (Get-Command powershell.exe).Source
-                $Shortcut.Arguments = "-NoExit"
-            }
+        $Shortcut.TargetPath = switch ($PSCmdlet.ParameterSetName) {
+            'ExecutablePath'         { $ExecutablePath }
+            'ForceWindowsPowerShell' { (Get-Command powershell.exe).Source }
+            default                  { (Get-Command pwsh.exe -ErrorAction SilentlyContinue)?.Source ?? (Get-Command powershell.exe).Source }
         }
+        $Shortcut.Arguments = '-NoExit'
 
         $Shortcut.Description = $DisplayName
         if ($IconPath) {

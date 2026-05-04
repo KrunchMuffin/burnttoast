@@ -37,7 +37,9 @@ function Get-BTHistory {
         https://github.com/Windos/BurntToast/blob/main/Help/Get-BTHistory.md
     #>
 
-    [cmdletBinding(HelpUri='https://github.com/Windos/BurntToast/blob/main/Help/Get-BTHistory.md')]
+    [CmdletBinding(HelpUri = 'https://github.com/Windos/BurntToast/blob/main/Help/Get-BTHistory.md')]
+    [OutputType([Microsoft.Toolkit.Uwp.Notifications.ToastNotification])]
+    [OutputType([Microsoft.Toolkit.Uwp.Notifications.ScheduledToastNotification])]
     param (
         [string] $UniqueIdentifier,
 

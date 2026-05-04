@@ -38,7 +38,7 @@
 
     [CmdletBinding(SupportsShouldProcess = $true,
                    HelpUri = 'https://github.com/Windos/BurntToast/blob/main/Help/New-BTHeader.md')]
-
+    [OutputType([Microsoft.Toolkit.Uwp.Notifications.ToastHeader])]
     param (
         [Parameter()]
         [string] $Id = 'ID' + (New-Guid).ToString().Replace('-','').ToUpper(),

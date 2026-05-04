@@ -72,32 +72,28 @@ Describe 'Optimize-BTImageSource' {
     }
 }
 Describe 'Get-BTScriptBlockHash' {
-    It 'returns a consistent hash for identical scriptblocks' {
+    It 'returns a consistent hash for byte-identical scriptblocks' {
         $sb1 = { Write-Host 'foo'; "bar" }
         $sb2 = { Write-Host 'foo'; "bar" }
-        $hash1 = Get-BTScriptBlockHash $sb1
-        $hash2 = Get-BTScriptBlockHash $sb2
-        $hash1 | Should -BeExactly $hash2
+        Get-BTScriptBlockHash $sb1 | Should -BeExactly (Get-BTScriptBlockHash $sb2)
     }
-    It 'is whitespace-agnostic for logically identical scriptblocks' {
-        $sb1 = {Write-Host    'foo';  "bar"}
-        $sb2 = {
-            Write-Host
-                'foo'
-            ;"bar"
-        }
-        $hash1 = Get-BTScriptBlockHash $sb1
-        $hash2 = Get-BTScriptBlockHash $sb2
-        $hash1 | Should -BeExactly $hash2
+    It 'distinguishes scriptblocks differing only in whitespace' {
+        $sb1 = { Write-Host 'foo' }
+        $sb2 = { Write-Host  'foo' }
+        Get-BTScriptBlockHash $sb1 | Should -Not -BeExactly (Get-BTScriptBlockHash $sb2)
     }
     It 'distinguishes truly different scriptblocks' {
         $sb1 = { Write-Host 'foo' }
         $sb2 = { Write-Host 'bar' }
         Get-BTScriptBlockHash $sb1 | Should -Not -BeExactly (Get-BTScriptBlockHash $sb2)
     }
-    It 'hashes scriptblocks containing only whitespace the same as empty' {
-        $sb1 = { }
-        $sb2 = {    }
-        Get-BTScriptBlockHash $sb1 | Should -BeExactly (Get-BTScriptBlockHash $sb2)
+    It 'returns a 64-character lowercase hex string' {
+        $hash = Get-BTScriptBlockHash { 'anything' }
+        $hash | Should -Match '^[0-9a-f]{64}$'
+    }
+    It 'accepts pipeline input' {
+        $direct = Get-BTScriptBlockHash { 'piped' }
+        $piped = { 'piped' } | Get-BTScriptBlockHash
+        $direct | Should -BeExactly $piped
     }
 }

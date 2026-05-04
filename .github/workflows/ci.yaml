@@ -31,28 +31,9 @@ jobs:
           $Pwsh32 = .github/workflows/pwsh32.ps1
           & $Pwsh32 -File ./tasks/build.ps1 -Test
 
-  Win2025-x64-winpwsh:
-    name: Server 2025 - Windows PowerShell - x64
-    runs-on: windows-2025
-    steps:
-      - uses: actions/checkout@v3
-      - name: Perform a Pester test from the command-line
-        shell: powershell
-        run: ./tasks/build.ps1 -Test
-
-  Win2025-x86-winpwsh:
-    name: Server 2025 - Windows PowerShell - x86
-    runs-on: windows-2025
-    steps:
-      - uses: actions/checkout@v3
-      - name: Perform a Pester test from the command-line
-        shell: powershell
-        # TODO: This could be problematic with hardcoding
-        run: C:\Windows\syswow64\WindowsPowerShell\v1.0\powershell.exe -File ./tasks/build.ps1 -Test
-
   build-and-oat-module:
     name: Build Module and OAT
-    needs: ["Win2025-x64-pwsh", "Win2025-x64-winpwsh", "Win2025-x86-pwsh", "Win2025-x86-winpwsh"]
+    needs: ["Win2025-x64-pwsh", "Win2025-x86-pwsh"]
     runs-on: windows-2025
     steps:
       - uses: actions/checkout@v3

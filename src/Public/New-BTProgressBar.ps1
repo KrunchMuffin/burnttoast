@@ -55,6 +55,7 @@
     [CmdletBinding(DefaultParameterSetName = 'Determinate',
                    SupportsShouldProcess   = $true,
                    HelpUri = 'https://github.com/Windos/BurntToast/blob/main/Help/New-BTProgressBar.md')]
+    [OutputType([Microsoft.Toolkit.Uwp.Notifications.AdaptiveProgressBar])]
     param (
         [string] $Title,
 

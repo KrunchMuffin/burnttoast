@@ -8,6 +8,10 @@ function Remove-BTNotification {
         If no parameters are specified, all toast notifications for this app are removed.
         Specify Tag and/or Group to remove specific notifications. Use UniqueIdentifier to remove notifications matching both tag and group.
 
+        Accepts pipeline input by property name, so toasts returned from Get-BTHistory can be piped in directly:
+
+            Get-BTHistory | Where-Object Status -eq 'Dismissed' | Remove-BTNotification
+
         .PARAMETER Tag
         The tag of the toast notification(s) to remove (String).
 
@@ -18,7 +22,8 @@ function Remove-BTNotification {
         Used to specify both the Tag and Group and remove a uniquely identified toast.
 
         .INPUTS
-        None. You cannot pipe input to this function.
+        Microsoft.Toolkit.Uwp.Notifications.ToastNotification
+        Objects with Tag and/or Group properties (such as those returned by Get-BTHistory) may be piped in.
 
         .OUTPUTS
         None.
@@ -39,6 +44,10 @@ function Remove-BTNotification {
         Remove-BTNotification -UniqueIdentifier 'Toast001'
         Removes the toast notification with both tag and group set to 'Toast001'.
 
+        .EXAMPLE
+        Get-BTHistory | Remove-BTNotification
+        Removes every notification currently in the Action Center for this app, one by one, by piping each toast's tag and group through.
+
         .LINK
         https://github.com/Windos/BurntToast/blob/main/Help/Remove-BTNotification.md
     #>
@@ -46,39 +55,43 @@ function Remove-BTNotification {
     [CmdletBinding(DefaultParameterSetName = 'Individual',
                    SupportsShouldProcess = $true,
                    HelpUri = 'https://github.com/Windos/BurntToast/blob/main/Help/Remove-BTNotification.md')]
+    [OutputType([void])]
     param (
-        [Parameter(ParameterSetName = 'Individual')]
+        [Parameter(ParameterSetName = 'Individual', ValueFromPipelineByPropertyName)]
         [string] $Tag,
 
-        [Parameter(ParameterSetName = 'Individual')]
+        [Parameter(ParameterSetName = 'Individual', ValueFromPipelineByPropertyName)]
         [string] $Group,
 
         [Parameter(Mandatory = $true,
-                   ParameterSetName = 'Combo')]
+                   ParameterSetName = 'Combo',
+                   ValueFromPipelineByPropertyName)]
         [string] $UniqueIdentifier
     )
 
-    if ($UniqueIdentifier) {
-        if($PSCmdlet.ShouldProcess("Tag: $UniqueIdentifier, Group: $UniqueIdentifier", 'Selectively removing notifications')) {
-            [Microsoft.Toolkit.Uwp.Notifications.ToastNotificationManagerCompat]::History.Remove($UniqueIdentifier, $UniqueIdentifier)
-        }
-    }
+    process {
+        $History = [Microsoft.Toolkit.Uwp.Notifications.ToastNotificationManagerCompat]::History
 
-    if ($Tag -and $Group) {
-        if($PSCmdlet.ShouldProcess("Tag: $Tag, Group: $Group", 'Selectively removing notifications')) {
-            [Microsoft.Toolkit.Uwp.Notifications.ToastNotificationManagerCompat]::History.Remove($Tag, $Group)
-        }
-    } elseif ($Tag) {
-        if($PSCmdlet.ShouldProcess("Tag: $Tag", 'Selectively removing notifications')) {
-            [Microsoft.Toolkit.Uwp.Notifications.ToastNotificationManagerCompat]::History.Remove($Tag)
-        }
-    } elseif ($Group) {
-        if($PSCmdlet.ShouldProcess("Group: $Group", 'Selectively removing notifications')) {
-            [Microsoft.Toolkit.Uwp.Notifications.ToastNotificationManagerCompat]::History.RemoveGroup($Group)
-        }
-    } else {
-        if($PSCmdlet.ShouldProcess("All", 'Clearing all notifications')) {
-            [Microsoft.Toolkit.Uwp.Notifications.ToastNotificationManagerCompat]::History.Clear()
+        if ($UniqueIdentifier) {
+            if ($PSCmdlet.ShouldProcess("Tag: $UniqueIdentifier, Group: $UniqueIdentifier", 'Selectively removing notifications')) {
+                $History.Remove($UniqueIdentifier, $UniqueIdentifier)
+            }
+        } elseif ($Tag -and $Group) {
+            if ($PSCmdlet.ShouldProcess("Tag: $Tag, Group: $Group", 'Selectively removing notifications')) {
+                $History.Remove($Tag, $Group)
+            }
+        } elseif ($Tag) {
+            if ($PSCmdlet.ShouldProcess("Tag: $Tag", 'Selectively removing notifications')) {
+                $History.Remove($Tag)
+            }
+        } elseif ($Group) {
+            if ($PSCmdlet.ShouldProcess("Group: $Group", 'Selectively removing notifications')) {
+                $History.RemoveGroup($Group)
+            }
+        } else {
+            if ($PSCmdlet.ShouldProcess('All', 'Clearing all notifications')) {
+                $History.Clear()
+            }
         }
     }
 }
