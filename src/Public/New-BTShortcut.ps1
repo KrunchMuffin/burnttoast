@@ -4,11 +4,11 @@ function New-BTShortcut {
     Creates a Windows shortcut for launching PowerShell or a compatible host with a custom AppUserModelID, enabling full toast notification branding (name & icon).
 
     .DESCRIPTION
-    To ensure toast notifications show your custom app name and icon (registered by New-BTAppId), PowerShell (or a custom host) must be launched from a shortcut
+    To ensure toast notifications show your custom app name and icon, PowerShell (or a custom host) must be launched from a shortcut
     with the AppUserModelID property set. This function automates creation of such a shortcut, optionally with a custom icon and host executable.
 
     .PARAMETER AppId
-    The AppUserModelID to set on the shortcut (should match the value registered with New-BTAppId).
+    The AppUserModelID to set on the shortcut.
 
     .PARAMETER ShortcutPath
     Path where the shortcut (.lnk) will be created. Defaults to Desktop.
@@ -17,7 +17,7 @@ function New-BTShortcut {
     Friendly display name/description for the shortcut (optional).
 
     .PARAMETER IconPath
-    Path to the icon image to use for the shortcut (should match icon registered for AppId; optional).
+    Path to the icon image to use for the shortcut.
 
     .PARAMETER ForceWindowsPowerShell
     Forces the shortcut to use Windows PowerShell (powershell.exe), even if PowerShell 7+ (pwsh.exe) is available. Cannot be used with ExecutablePath.
@@ -29,7 +29,7 @@ function New-BTShortcut {
     None. You cannot pipe input to this function.
 
     .OUTPUTS
-    System.IO.FileInfo (Returns the path to the created shortcut file).
+    None.
 
     .EXAMPLE
     New-BTShortcut -AppId "Acme.MyApp" -DisplayName "My App PowerShell" -IconPath "C:\Path\To\MyIcon.ico"

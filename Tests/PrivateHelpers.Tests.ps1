@@ -56,6 +56,28 @@ Describe 'Optimize-BTImageSource' {
             $result2 | Should -BeLike "$env:TEMP*"
             $result2 | Should -BeLike "*img.png"
         }
+
+        It 'warns and falls back when a UNC source cannot be retrieved' {
+            Mock -CommandName Copy-Item { throw 'copy failed' }
+
+            $unc = "\\server\share\$([System.Guid]::NewGuid()).png"
+
+            { $script:result = Optimize-BTImageSource -Source $unc 3>&1 } | Should -Not -Throw
+            $script:result | Where-Object { $null -ne $_ } | Should -HaveCount 1
+            ($script:result | Where-Object { $null -ne $_ }).ToString() | Should -Match 'could not be retrieved, falling back to icon'
+            $script:result[-1] | Should -BeNullOrEmpty
+        }
+
+        It 'warns and falls back when an HTTP source cannot be retrieved' {
+            Mock -CommandName Invoke-WebRequest { throw 'download failed' }
+
+            $http = "http://example.com/$([System.Guid]::NewGuid()).png"
+
+            { $script:result = Optimize-BTImageSource -Source $http 3>&1 } | Should -Not -Throw
+            $script:result | Where-Object { $null -ne $_ } | Should -HaveCount 1
+            ($script:result | Where-Object { $null -ne $_ }).ToString() | Should -Match 'could not be retrieved, falling back to icon'
+            $script:result[-1] | Should -BeNullOrEmpty
+        }
     }
     Context 'with ForceRefresh' {
         It 'attempts to fetch even if file exists' {

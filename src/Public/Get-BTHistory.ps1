@@ -18,8 +18,8 @@ function Get-BTHistory {
         None. You cannot pipe input to this function.
 
         .OUTPUTS
-        Microsoft.Toolkit.Uwp.Notifications.ToastNotification
-        Microsoft.Toolkit.Uwp.Notifications.ScheduledToastNotification
+        Windows.UI.Notifications.ToastNotification
+        Windows.UI.Notifications.ScheduledToastNotification
 
         .EXAMPLE
         Get-BTHistory
@@ -38,8 +38,8 @@ function Get-BTHistory {
     #>
 
     [CmdletBinding(HelpUri = 'https://github.com/Windos/BurntToast/blob/main/Help/Get-BTHistory.md')]
-    [OutputType([Microsoft.Toolkit.Uwp.Notifications.ToastNotification])]
-    [OutputType([Microsoft.Toolkit.Uwp.Notifications.ScheduledToastNotification])]
+    [OutputType([Windows.UI.Notifications.ToastNotification])]
+    [OutputType([Windows.UI.Notifications.ScheduledToastNotification])]
     param (
         [string] $UniqueIdentifier,
 

@@ -117,6 +117,8 @@ Describe 'Get-BTHeader' {
             Mock Get-BTHistory -ModuleName BurntToast -Verifiable -ParameterFilter { $ScheduledToast } {
                 New-MockNotification -HeaderId 'ID01' -HeaderTitle 'Title 01' -HeaderArguments 'arguments' -HeaderProtocol 'protocol'
             }
+
+            Mock Get-BTHistory -ModuleName BurntToast -Verifiable -ParameterFilter { -not $ScheduledToast }
         }
 
         It 'should return all header properties' {

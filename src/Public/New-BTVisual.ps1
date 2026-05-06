@@ -4,13 +4,10 @@
         Creates a new visual element for toast notifications.
 
         .DESCRIPTION
-        The New-BTVisual function creates a ToastVisual object, defining the visual appearance and layout for a Toast Notification. This includes the root Toast binding, optional alternate bindings, image query, base URI, and locale settings.
+        The New-BTVisual function creates a ToastVisual object, defining the visual appearance and layout for a Toast Notification. This includes the root Toast binding, image query, base URI, and locale settings.
 
         .PARAMETER BindingGeneric
         Mandatory. ToastBindingGeneric object describing the main layout and visuals (text, images, progress bars, columns).
-
-        .PARAMETER BindingShoulderTap
-        Optional alternate Toast binding that can be rendered on devices supporting ShoulderTap notifications.
 
         .PARAMETER AddImageQuery
         Switch. Allows image URIs to include scale and language info added by Windows.
@@ -42,8 +39,6 @@
         [Parameter(Mandatory)]
         [Microsoft.Toolkit.Uwp.Notifications.ToastBindingGeneric] $BindingGeneric,
 
-        [Microsoft.Toolkit.Uwp.Notifications.ToastBindingShoulderTap] $BindingShoulderTap,
-
         [switch] $AddImageQuery,
 
         [uri] $BaseUri,
@@ -53,8 +48,6 @@
 
     $Visual = [Microsoft.Toolkit.Uwp.Notifications.ToastVisual]::new()
     $Visual.BindingGeneric = $BindingGeneric
-
-    $Visual.BindingShoulderTap = $BindingShoulderTap
 
     if ($AddImageQuery) {
         $Visual.AddImageQuery = $AddImageQuery

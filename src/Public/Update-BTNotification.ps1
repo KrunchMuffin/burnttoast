@@ -21,8 +21,8 @@ function Update-BTNotification {
         Hashtable containing the data binding keys/values to update.
 
         .INPUTS
-        Microsoft.Toolkit.Uwp.Notifications.ToastNotification
-        Objects with a UniqueIdentifier (or matching Tag/Group) property may be piped in.
+        System.Object
+        Objects with a UniqueIdentifier property, such as selected objects returned by Get-BTHistory, may be piped in by property name.
 
         .OUTPUTS
         None.

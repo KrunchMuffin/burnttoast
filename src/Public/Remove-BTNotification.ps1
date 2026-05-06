@@ -22,8 +22,8 @@ function Remove-BTNotification {
         Used to specify both the Tag and Group and remove a uniquely identified toast.
 
         .INPUTS
-        Microsoft.Toolkit.Uwp.Notifications.ToastNotification
-        Objects with Tag and/or Group properties (such as those returned by Get-BTHistory) may be piped in.
+        System.Object
+        Objects with Tag, Group, or UniqueIdentifier properties (such as those returned by Get-BTHistory) may be piped in by property name.
 
         .OUTPUTS
         None.
