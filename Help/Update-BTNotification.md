@@ -9,6 +9,8 @@ Updates an existing toast notification.
 The `Update-BTNotification` function updates a toast notification by matching `UniqueIdentifier` and replacing or updating its contents/data.
 `DataBinding` provides the values to update in the notification, and `SequenceNumber` ensures correct ordering if updates overlap.
 
+`UniqueIdentifier` accepts pipeline input by property name, so selected objects returned from `Get-BTHistory` can be piped in.
+
 ## PARAMETERS
 
 | Name              | Type     | Description                                                                                             | Mandatory |
@@ -19,7 +21,9 @@ The `Update-BTNotification` function updates a toast notification by matching `U
 
 ## INPUTS
 
-None. You cannot pipe input to this function.
+System.Object
+
+Objects with a `UniqueIdentifier` property may be piped in by property name.
 
 ## OUTPUTS
 
@@ -35,6 +39,14 @@ Update-BTNotification -UniqueIdentifier 'ID001' -DataBinding $data
 ```
 
 Updates notification with key 'ID001' using new data binding values.
+
+### Example 2
+
+```powershell
+Get-BTHistory | Update-BTNotification -DataBinding @{ Status = 'Done' }
+```
+
+Updates each piped notification by matching its `UniqueIdentifier` property.
 
 ## LINKS
 

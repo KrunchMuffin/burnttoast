@@ -23,8 +23,8 @@ None. You cannot pipe input to this function.
 
 ## OUTPUTS
 
-- Microsoft.Toolkit.Uwp.Notifications.ToastNotification
-- Microsoft.Toolkit.Uwp.Notifications.ScheduledToastNotification
+- Windows.UI.Notifications.ToastNotification
+- Windows.UI.Notifications.ScheduledToastNotification
 
 ## EXAMPLES
 

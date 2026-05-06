@@ -11,7 +11,7 @@ This function supports advanced scenarios such as event callbacks for user actio
 
 If a button in the toast is created using `New-BTButton` with the `-Color` parameter (`Green` or `Red`), Submit-BTNotification will ensure those buttons are visually styled as "Success" (green) or "Critical" (red) in capable environments. This allows you to clearly indicate primary/positive or destructive actions on the notification.
 
-When a script block is supplied for any of the event actions (`ActivatedAction`, `DismissedAction`, or `FailedAction`), the function ensures that only one registration for a logically identical handler is allowed per notification event type. This is accomplished by normalizing and hashing the script block; the resulting hash uniquely identifies the action for event registration purposes. Attempting to register the same handler multiple times for a given event will not create a duplicate subscription, but instead will produce an informative warning.
+When a script block is supplied for any of the event actions (`ActivatedAction`, `DismissedAction`, or `FailedAction`), the function ensures that only one registration for a byte-identical handler is allowed per notification event type. This is accomplished by hashing the raw script block source text; the resulting hash uniquely identifies the action for event registration purposes. Attempting to register the same handler multiple times for a given event will not create a duplicate subscription, but instead will produce an informative warning.
 
 If the `-ReturnEventData` switch is used and any event action scriptblocks are supplied (`ActivatedAction`, `DismissedAction`, `FailedAction`),
 the `$Event` automatic variable from the event will be assigned to `$global:ToastEvent` before invoking your script block.
@@ -23,7 +23,7 @@ Specifying `-EventDataVariable` implicitly enables the behavior of `-ReturnEvent
 
 | Name               | Type        | Description                                                                                                           | Mandatory |
 |--------------------|-------------|-----------------------------------------------------------------------------------------------------------------------|-----------|
-| `Content`          | ToastContent     | A ToastContent object to display, such as returned by `New-BTContent`. The content defines the visual and data parts of the toast.                | No        |
+| `Content`          | ToastContent     | A ToastContent object to display, such as returned by `New-BTContent`. The content defines the visual and data parts of the toast and may be piped in. | Yes       |
 | `SequenceNumber`   | UInt64      | A number that sequences this notification's version. When updating a toast, a higher sequence number ensures the most recent notification is displayed. | No        |
 | `UniqueIdentifier` | String      | A string that uniquely identifies the toast notification. Submitting a new toast with the same identifier as a previous toast replaces the previous notification. | No        |
 | `DataBinding`      | Hashtable   | Hashtable mapping strings to binding keys in a toast notification. Enables advanced updating scenarios.                | No        |
@@ -38,7 +38,9 @@ Specifying `-EventDataVariable` implicitly enables the behavior of `-ReturnEvent
 
 ## INPUTS
 
-None. You cannot pipe input to this function.
+Microsoft.Toolkit.Uwp.Notifications.ToastContent
+
+ToastContent objects, such as those produced by `New-BTContent`, may be piped in.
 
 ## OUTPUTS
 
@@ -53,6 +55,14 @@ Submit-BTNotification -Content $Toast1 -UniqueIdentifier 'Toast001'
 ```
 
 Submits the toast content object `$Toast1` and tags it with a unique identifier so it can be replaced or updated.
+
+### Example 2
+
+```powershell
+$Toast1, $Toast2 | Submit-BTNotification
+```
+
+Submits each toast content object from the pipeline.
 
 ## LINKS
 

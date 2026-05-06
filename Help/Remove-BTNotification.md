@@ -10,6 +10,8 @@ The `Remove-BTNotification` function removes toast notifications for the current
 If no parameters are specified, all toast notifications for this app are removed.
 Specify `Tag` and/or `Group` to remove specific notifications. Use `UniqueIdentifier` to remove notifications matching both tag and group.
 
+`Tag`, `Group`, and `UniqueIdentifier` accept pipeline input by property name, so selected objects returned from `Get-BTHistory` can be piped in.
+
 ## PARAMETERS
 
 | Name              | Type    | Description                                                                                 | Mandatory                       |
@@ -20,7 +22,9 @@ Specify `Tag` and/or `Group` to remove specific notifications. Use `UniqueIdenti
 
 ## INPUTS
 
-None. You cannot pipe input to this function.
+System.Object
+
+Objects with `Tag`, `Group`, or `UniqueIdentifier` properties may be piped in by property name.
 
 ## OUTPUTS
 
@@ -59,6 +63,14 @@ Remove-BTNotification -UniqueIdentifier 'Toast001'
 ```
 
 Removes the toast notification with both tag and group set to 'Toast001'.
+
+### Example 5
+
+```powershell
+Get-BTHistory | Remove-BTNotification
+```
+
+Removes every piped notification by using its `Tag` and `Group` properties.
 
 ## LINKS
 
