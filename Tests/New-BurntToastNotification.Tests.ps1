@@ -76,6 +76,25 @@ Describe 'New-BurntToastNotification' {
         }
     }
 
+    Context 'manual duration option' {
+        BeforeAll {
+            Start-Transcript tmp.log
+            try {
+                New-BurntToastNotification -Text 'Long toast' -Duration Long -WhatIf
+            }
+            finally {
+                Stop-Transcript
+                $Log = (Get-Content tmp.log).Where({ $_ -match "What if: " })
+                Remove-Item tmp.log
+            }
+        }
+
+        It 'has consitent WhatIf response' {
+            $Expected = "What if: Performing the operation ""New-BurntToastNotification"" on target ""submitting: <?xml version=""1.0"" encoding=""utf-8""?><toast duration=""long""><visual><binding template=""ToastGeneric""><text>{Long toast}</text><image src=""$ImagePath"" placement=""appLogoOverride"" hint-crop=""circle"" /></binding></visual></toast>""."
+            $Log | Should -Be $Expected
+        }
+    }
+
     Context 'include a button' {
         BeforeAll {
             Start-Transcript tmp.log

@@ -17,6 +17,7 @@ function Submit-BTNotification {
         the $Event automatic variable from the event will be assigned to $global:ToastEvent before invoking your script block.
         You can override the variable name used for event data by specifying -EventDataVariable. If supplied, the event data will be assigned to the chosen global variable in your event handler (e.g., -EventDataVariable 'CustomEvent' results in $global:CustomEvent).
         Specifying -EventDataVariable implicitly enables the behavior of -ReturnEventData.
+        ActivatedAction event data includes the ToastNotification object as $Event.MessageData, allowing handlers to inspect the submitted XML content.
 
         .PARAMETER Content
         A ToastContent object to display, such as returned by New-BTContent. The content defines the visual and data parts of the toast.
@@ -97,6 +98,44 @@ function Submit-BTNotification {
             $null = [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime]
         }
         $CompatMgr = [Microsoft.Toolkit.Uwp.Notifications.ToastNotificationManagerCompat]
+
+        function Add-BTNotificationDataBindingFallback {
+            param (
+                [Parameter(Mandatory)]
+                [object] $Element,
+
+                [Parameter(Mandatory)]
+                [System.Collections.Generic.Dictionary[string,string]] $DataDictionary
+            )
+
+            if ($Element.GetType().Name -eq 'AdaptiveText' -and $Element.Text) {
+                $BindingName = $Element.Text.BindingName
+
+                if ($BindingName -and !$DataDictionary.ContainsKey($BindingName)) {
+                    $DataDictionary.Add($BindingName, $BindingName)
+                }
+            } elseif ($Element.GetType().Name -eq 'AdaptiveProgressBar') {
+                foreach ($PropertyName in 'Title', 'Value', 'ValueStringOverride', 'Status') {
+                    $BindableValue = $Element.$PropertyName
+
+                    if ($BindableValue) {
+                        $BindingName = $BindableValue.BindingName
+
+                        if ($BindingName -and !$DataDictionary.ContainsKey($BindingName)) {
+                            $DataDictionary.Add($BindingName, $BindingName)
+                        }
+                    }
+                }
+            }
+
+            $ChildrenProperty = $Element.PSObject.Properties['Children']
+
+            if ($ChildrenProperty -and $ChildrenProperty.Value) {
+                foreach ($Child in $ChildrenProperty.Value) {
+                    Add-BTNotificationDataBindingFallback -Element $Child -DataDictionary $DataDictionary
+                }
+            }
+        }
     }
 
     process {
@@ -148,45 +187,7 @@ function Submit-BTNotification {
             }
 
             foreach ($Child in $Content.Visual.BindingGeneric.Children) {
-                if ($Child.GetType().Name -eq 'AdaptiveText') {
-                    $BindingName = $Child.Text.BindingName
-
-                    if (!$DataDictionary.ContainsKey($BindingName)) {
-                        $DataDictionary.Add($BindingName, $BindingName)
-                    }
-                } elseif ($Child.GetType().Name -eq 'AdaptiveProgressBar') {
-                    if ($Child.Title) {
-                        $BindingName = $Child.Title.BindingName
-
-                        if (!$DataDictionary.ContainsKey($BindingName)) {
-                            $DataDictionary.Add($BindingName, $BindingName)
-                        }
-                    }
-
-                    if ($Child.Value) {
-                        $BindingName = $Child.Value.BindingName
-
-                        if (!$DataDictionary.ContainsKey($BindingName)) {
-                            $DataDictionary.Add($BindingName, $BindingName)
-                        }
-                    }
-
-                    if ($Child.ValueStringOverride) {
-                        $BindingName = $Child.ValueStringOverride.BindingName
-
-                        if (!$DataDictionary.ContainsKey($BindingName)) {
-                            $DataDictionary.Add($BindingName, $BindingName)
-                        }
-                    }
-
-                    if ($Child.Status) {
-                        $BindingName = $Child.Status.BindingName
-
-                        if (!$DataDictionary.ContainsKey($BindingName)) {
-                            $DataDictionary.Add($BindingName, $BindingName)
-                        }
-                    }
-                }
+                Add-BTNotificationDataBindingFallback -Element $Child -DataDictionary $DataDictionary
             }
 
             $Toast.Data = [Windows.UI.Notifications.NotificationData]::new($DataDictionary)
@@ -234,6 +235,7 @@ function Submit-BTNotification {
                         InputObject      = $CompatMgr
                         EventName        = 'OnActivated'
                         Action           = $Action_Activated
+                        MessageData      = $Toast
                         SourceIdentifier = "BT_Activated_$ActivatedHash"
                         ErrorAction      = 'Stop'
                     }

@@ -1,4 +1,8 @@
-$OSVersion = [System.Environment]::OSVersion.Version
+$OSVersion = try {
+    [version] (Get-CimInstance -ClassName Win32_OperatingSystem -Property Version -ErrorAction Stop).Version
+} catch {
+    [System.Environment]::OSVersion.Version
+}
 
 if ($OSVersion.Major -ge 10 -and $null -eq $env:BurntToastPesterNotWindows10) {
     if ($OSVersion.Build -ge 15063 -and $null -eq $env:BurntToastPesterNotAnniversaryUpdate) {

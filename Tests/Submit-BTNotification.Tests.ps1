@@ -64,4 +64,25 @@ Describe 'Submit-BTNotification' {
             { $a, $b | Submit-BTNotification -WhatIf } | Should -Not -Throw
         }
     }
+    Context 'data binding fallbacks' {
+        It 'runs without error when static text is nested inside columns' {
+            $labels = New-BTText -Style Base -Text 'unbind_title'
+            $values = New-BTText -Style BaseSubtle -Text 'unbind_subtitle'
+            $progress = New-BTProgressBar -Status 'bind_status' -Value 'bind_value' -ValueDisplay 'bind_value_display'
+
+            $col1 = New-BTColumn -Children $labels -Weight 4
+            $col2 = New-BTColumn -Children $values -Weight 6
+
+            $binding = New-BTBinding -Column $col1, $col2 -Children $progress
+            $visual = New-BTVisual -BindingGeneric $binding
+            $content = New-BTContent -Visual $visual
+            $data = @{
+                bind_status        = 'Status initial'
+                bind_value         = 0.5
+                bind_value_display = 'Progress start'
+            }
+
+            { Submit-BTNotification -Content $content -DataBinding $data -UniqueIdentifier ([guid]::NewGuid().ToString()) -WhatIf } | Should -Not -Throw
+        }
+    }
 }

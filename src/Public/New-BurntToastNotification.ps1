@@ -50,6 +50,9 @@
         .PARAMETER ExpirationTime
         DateTime. After which the notification is removed from the Action Center.
 
+        .PARAMETER Duration
+        How long the toast popup is displayed. Long is also used automatically for looping alarm and call sounds.
+
         .PARAMETER SuppressPopup
         Switch. If set, the toast is sent to Action Center but not displayed as a popup.
 
@@ -183,6 +186,8 @@
 
         [datetime] $ExpirationTime,
 
+        [Microsoft.Toolkit.Uwp.Notifications.ToastDuration] $Duration,
+
         [switch] $SuppressPopup,
 
         [datetime] $CustomTimestamp,
@@ -254,7 +259,9 @@
         'Visual' = $Visual
     }
 
-    if ($Long) {
+    if ($Duration) {
+        $ContentSplat.Add('Duration', $Duration)
+    } elseif ($Long) {
         $ContentSplat.Add('Duration', [Microsoft.Toolkit.Uwp.Notifications.ToastDuration]::Long)
     }
 

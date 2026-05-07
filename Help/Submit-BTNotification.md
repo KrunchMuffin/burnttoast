@@ -18,6 +18,7 @@ the `$Event` automatic variable from the event will be assigned to `$global:Toas
 You can override the variable name used for event data by specifying `-EventDataVariable`.
 If supplied, the event data will be assigned to the chosen global variable in your event handler (e.g., `-EventDataVariable 'CustomEvent'` results in `$global:CustomEvent`).
 Specifying `-EventDataVariable` implicitly enables the behavior of `-ReturnEventData`.
+Activated action event data includes the submitted ToastNotification object as `$Event.MessageData`, allowing handlers to inspect the toast XML content.
 
 ## PARAMETERS
 
