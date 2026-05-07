@@ -1,0 +1,1078 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BurntToast V2 Builder</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #201f1b;
+      --muted: #676159;
+      --paper: #f7f0e4;
+      --panel: #fffaf0;
+      --panel-2: #efe3d0;
+      --line: #d6c6af;
+      --accent: #b83a2e;
+      --accent-2: #176f69;
+      --accent-3: #c98d24;
+      --code: #171410;
+      --code-ink: #f8ead0;
+      --shadow: 0 20px 60px rgba(62, 46, 22, .18);
+      --radius: 8px;
+      font-family: "Aptos", "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(90deg, rgba(32, 31, 27, .055) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(32, 31, 27, .055) 1px, transparent 1px),
+        radial-gradient(circle at 86% 8%, rgba(184, 58, 46, .18), transparent 28rem),
+        radial-gradient(circle at 12% 18%, rgba(23, 111, 105, .16), transparent 26rem),
+        var(--paper);
+      background-size: 28px 28px, 28px 28px, auto, auto, auto;
+      color: var(--ink);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .controls {
+      border-right: 1px solid var(--line);
+      background: rgba(255, 250, 240, .82);
+      backdrop-filter: blur(14px);
+      padding: 24px;
+      overflow: auto;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      min-width: 0;
+    }
+
+    header {
+      padding: 24px 28px 16px;
+      border-bottom: 1px solid rgba(214, 198, 175, .8);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 34px;
+      line-height: 1;
+      font-weight: 700;
+    }
+
+    .subhead {
+      margin: 0;
+      max-width: 70ch;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .section {
+      padding: 18px 0;
+      border-bottom: 1px solid rgba(214, 198, 175, .85);
+    }
+
+    .section:first-child {
+      padding-top: 0;
+    }
+
+    .section h2 {
+      margin: 0 0 12px;
+      font-size: 13px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #4d453b;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      margin: 0 0 12px;
+    }
+
+    label,
+    .label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #39332c;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fffef9;
+      color: var(--ink);
+      padding: 8px 10px;
+      outline: none;
+      transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+    }
+
+    textarea {
+      min-height: 72px;
+      resize: vertical;
+      line-height: 1.35;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent-2);
+      box-shadow: 0 0 0 3px rgba(23, 111, 105, .14);
+      background: #ffffff;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    .file-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .file-pick {
+      position: relative;
+      overflow: hidden;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fffef9;
+      color: var(--ink);
+      padding: 8px 10px;
+      cursor: pointer;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .file-pick input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .checks {
+      display: grid;
+      gap: 8px;
+    }
+
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 34px;
+      color: #3f392f;
+      font-size: 14px;
+    }
+
+    .check input {
+      width: 16px;
+      min-height: 16px;
+      accent-color: var(--accent-2);
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      overflow: hidden;
+      background: #fffef9;
+    }
+
+    .segmented button {
+      min-height: 36px;
+      border: 0;
+      border-right: 1px solid var(--line);
+      background: transparent;
+      cursor: pointer;
+      color: var(--muted);
+    }
+
+    .segmented button:last-child {
+      border-right: 0;
+    }
+
+    .segmented button[aria-pressed="true"] {
+      background: var(--accent-2);
+      color: white;
+      font-weight: 700;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding-top: 12px;
+    }
+
+    .btn {
+      min-height: 38px;
+      border: 1px solid #1f1b16;
+      border-radius: 6px;
+      background: var(--ink);
+      color: white;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform .14s ease, box-shadow .14s ease, background .14s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(32, 31, 27, .18);
+    }
+
+    .btn.secondary {
+      background: #fffef9;
+      color: var(--ink);
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: minmax(320px, 460px) minmax(0, 1fr);
+      gap: 24px;
+      padding: 28px;
+      min-height: 0;
+    }
+
+    .preview-wrap,
+    .code-wrap {
+      min-width: 0;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .toast {
+      position: sticky;
+      top: 24px;
+      width: 100%;
+      max-width: 460px;
+      border: 1px solid rgba(32, 31, 27, .2);
+      border-radius: var(--radius);
+      background: rgba(255, 254, 249, .96);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .hero {
+      display: none;
+      width: 100%;
+      aspect-ratio: 16 / 5;
+      object-fit: cover;
+      background: linear-gradient(135deg, rgba(184, 58, 46, .24), rgba(23, 111, 105, .24));
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hero.visible {
+      display: block;
+    }
+
+    .toast-body {
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      gap: 14px;
+      padding: 16px;
+    }
+
+    .logo {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      overflow: hidden;
+      color: var(--accent);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .toast h3 {
+      margin: 0 0 4px;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .toast-header {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(239, 227, 208, .58);
+      color: #4d453b;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .toast-header.visible {
+      display: flex;
+    }
+
+    .toast-header span:first-child {
+      width: 8px;
+      height: 8px;
+      border-radius: 99px;
+      background: var(--accent-3);
+      flex: 0 0 auto;
+    }
+
+    .toast p {
+      margin: 0 0 7px;
+      color: #514a42;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .meta-grid {
+      display: none;
+      grid-template-columns: max-content 1fr;
+      column-gap: 12px;
+      row-gap: 4px;
+      margin: 10px 0;
+      font-size: 13px;
+    }
+
+    .meta-grid.visible {
+      display: grid;
+    }
+
+    .meta-grid dt {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .meta-grid dd {
+      margin: 0;
+    }
+
+    .progress {
+      display: none;
+      margin: 10px 0 4px;
+    }
+
+    .progress.visible {
+      display: block;
+    }
+
+    .bar {
+      height: 8px;
+      border-radius: 999px;
+      background: #e2d5c0;
+      overflow: hidden;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      width: 50%;
+      background: var(--accent-2);
+    }
+
+    .toast-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 16px 16px 86px;
+    }
+
+    .toast-actions button {
+      min-height: 32px;
+      border-radius: 5px;
+      border: 1px solid var(--line);
+      background: #fffef9;
+      color: var(--ink);
+      padding: 6px 10px;
+      font-weight: 700;
+    }
+
+    .toast-actions .green {
+      border-color: rgba(23, 111, 105, .3);
+      color: #0f5f58;
+      background: rgba(23, 111, 105, .1);
+    }
+
+    .toast-actions .red {
+      border-color: rgba(184, 58, 46, .3);
+      color: #9f2a20;
+      background: rgba(184, 58, 46, .1);
+    }
+
+    .attribution {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .code-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    pre {
+      margin: 0;
+      max-height: calc(100vh - 150px);
+      overflow: auto;
+      background: var(--code);
+      color: var(--code-ink);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      line-height: 1.45;
+      tab-size: 2;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    code {
+      font-family: "Cascadia Mono", "Consolas", monospace;
+      font-size: 13px;
+    }
+
+    .copy-status {
+      min-height: 18px;
+      color: var(--accent-2);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 980px) {
+      .app,
+      .stage {
+        grid-template-columns: 1fr;
+      }
+
+      .controls {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .toast {
+        position: relative;
+        top: auto;
+        max-width: none;
+      }
+
+      pre {
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .controls,
+      header,
+      .stage {
+        padding: 18px;
+      }
+
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+
+      .grid-3,
+      .file-row {
+        grid-template-columns: 1fr;
+      }
+
+      .toast-body {
+        grid-template-columns: 44px 1fr;
+        gap: 10px;
+      }
+
+      .logo {
+        width: 42px;
+        height: 42px;
+      }
+
+      .toast-actions {
+        padding-left: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <aside class="controls">
+      <div class="section">
+        <h2>Text</h2>
+        <div class="field">
+          <label for="title">Title</label>
+          <input id="title" value="BurntToast V2">
+        </div>
+        <div class="field">
+          <label for="body">Body</label>
+          <textarea id="body">Your toast notification is ready.</textarea>
+        </div>
+        <div class="field">
+          <label for="attribution">Attribution</label>
+          <input id="attribution" value="Generated with BurntToast Builder">
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Images</h2>
+        <div class="field">
+          <label for="appLogo">App logo path or URI</label>
+          <div class="file-row">
+            <input id="appLogo" value="F:\burnttoast\src\Images\BurntToast-Logo.png">
+            <label class="file-pick">Pick file<input id="appLogoFile" type="file" accept="image/*"></label>
+          </div>
+          <div class="hint" id="appLogoFileName"></div>
+        </div>
+        <div class="field">
+          <label for="heroImage">Hero image path or URI</label>
+          <div class="file-row">
+            <input id="heroImage" value="F:\burnttoast\images\BurntToast-Wide.png">
+            <label class="file-pick">Pick file<input id="heroImageFile" type="file" accept="image/*"></label>
+          </div>
+          <div class="hint" id="heroImageFileName"></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Layout</h2>
+        <div class="checks">
+          <label class="check"><input id="useColumns" type="checkbox" checked> Include columns</label>
+          <label class="check"><input id="useProgress" type="checkbox" checked> Include progress bar</label>
+          <label class="check"><input id="useHeader" type="checkbox" checked> Include header</label>
+          <label class="check"><input id="suppressPopup" type="checkbox"> Send only to Action Center</label>
+          <label class="check"><input id="urgent" type="checkbox"> Mark urgent</label>
+        </div>
+        <div class="field" style="margin-top: 12px;">
+          <span class="label">Header</span>
+          <div class="grid-3">
+            <input id="headerId" aria-label="Header id" value="burnttoast-builder">
+            <input id="headerTitle" aria-label="Header title" value="BurntToast Builder">
+            <input id="headerArguments" aria-label="Header arguments" value="burnttoast://builder">
+          </div>
+          <div class="hint">Headers group notifications in Action Center. Depending on Windows, the popup may show only a subtle category cue.</div>
+        </div>
+        <div class="field" style="margin-top: 12px;">
+          <span class="label">Column rows</span>
+          <div class="grid-2">
+            <input id="columnLabel1" aria-label="Column label 1" value="Version:">
+            <input id="columnValue1" aria-label="Column value 1" value="2.0.0">
+            <input id="columnLabel2" aria-label="Column label 2" value="Status:">
+            <input id="columnValue2" aria-label="Column value 2" value="Generated">
+            <input id="columnLabel3" aria-label="Column label 3" value="Mode:">
+            <input id="columnValue3" aria-label="Column value 3" value="Local script">
+          </div>
+        </div>
+        <div class="field">
+          <label for="progressValue">Progress value</label>
+          <input id="progressValue" type="range" min="0" max="100" value="68">
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Actions</h2>
+        <div class="hint" style="margin-bottom: 8px;">Native Windows toast buttons support plain, green Success, or red Critical styling.</div>
+        <div class="segmented" role="group" aria-label="Button style">
+          <button type="button" class="tone" data-tone="none" aria-pressed="false">Plain</button>
+          <button type="button" class="tone" data-tone="green" aria-pressed="true">Green</button>
+          <button type="button" class="tone" data-tone="red" aria-pressed="false">Red</button>
+        </div>
+        <div class="grid-2" style="margin-top: 12px;">
+          <div class="field">
+            <label for="buttonText">Button text</label>
+            <input id="buttonText" value="Open">
+          </div>
+          <div class="field">
+            <label for="buttonArgument">Button argument</label>
+            <input id="buttonArgument" value="https://github.com/Windos/BurntToast">
+          </div>
+        </div>
+        <div class="checks">
+          <label class="check"><input id="includeDismiss" type="checkbox" checked> Add dismiss button</label>
+          <label class="check"><input id="includeInput" type="checkbox"> Add text input</label>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Delivery</h2>
+        <div class="grid-2">
+          <div class="field">
+            <label for="sound">Sound</label>
+            <select id="sound">
+              <option>Default</option>
+              <option>IM</option>
+              <option>Mail</option>
+              <option selected>Reminder</option>
+              <option>SMS</option>
+              <option>Alarm2</option>
+              <option>Call2</option>
+              <option>Silent</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="identifier">Unique ID</label>
+            <input id="identifier" value="burnttoast-builder-demo">
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn" id="copyTop" type="button">Copy code</button>
+        <button class="btn secondary" id="reset" type="button">Reset</button>
+      </div>
+      <div class="copy-status" id="copyStatus" aria-live="polite"></div>
+    </aside>
+
+    <section class="workspace">
+      <header>
+        <h1>BurntToast Builder</h1>
+        <p class="subhead">Pick the pieces you want, preview the shape of the toast, then copy the generated PowerShell for BurntToast V2.</p>
+      </header>
+
+      <div class="stage">
+        <div class="preview-wrap">
+        <p class="eyebrow">Preview</p>
+        <article class="toast" aria-label="Toast preview">
+          <img class="hero" id="previewHero" alt="">
+            <div class="toast-header" id="previewHeader"><span></span><strong id="previewHeaderTitle"></strong></div>
+            <div class="toast-body">
+              <div class="logo" id="previewLogo">B</div>
+              <div>
+                <h3 id="previewTitle"></h3>
+                <p id="previewBody"></p>
+                <dl class="meta-grid" id="previewColumns">
+                  <dt>Version</dt><dd>2.0.0</dd>
+                  <dt>Status</dt><dd>Generated</dd>
+                  <dt>Mode</dt><dd>Local script</dd>
+                </dl>
+                <div class="progress" id="previewProgress">
+                  <p><strong id="previewProgressLabel"></strong></p>
+                  <div class="bar"><span id="previewProgressBar"></span></div>
+                </div>
+                <p class="attribution" id="previewAttribution"></p>
+              </div>
+            </div>
+            <div class="toast-actions" id="previewActions"></div>
+          </article>
+        </div>
+
+        <div class="code-wrap">
+          <div class="code-toolbar">
+            <p class="eyebrow">Generated PowerShell</p>
+            <button class="btn secondary" id="copyCode" type="button">Copy</button>
+          </div>
+          <pre><code id="code"></code></pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const defaults = {
+      title: 'BurntToast V2',
+      body: 'Your toast notification is ready.',
+      attribution: 'Generated with BurntToast Builder',
+      appLogo: 'F:\\burnttoast\\src\\Images\\BurntToast-Logo.png',
+      heroImage: 'F:\\burnttoast\\images\\BurntToast-Wide.png',
+      useColumns: true,
+      columnLabel1: 'Version:',
+      columnValue1: '2.0.0',
+      columnLabel2: 'Status:',
+      columnValue2: 'Generated',
+      columnLabel3: 'Mode:',
+      columnValue3: 'Local script',
+      useProgress: true,
+      useHeader: true,
+      headerId: 'burnttoast-builder',
+      headerTitle: 'BurntToast Builder',
+      headerArguments: 'burnttoast://builder',
+      suppressPopup: false,
+      urgent: false,
+      progressValue: 68,
+      tone: 'green',
+      buttonText: 'Open',
+      buttonArgument: 'https://github.com/Windos/BurntToast',
+      includeDismiss: true,
+      includeInput: false,
+      sound: 'Reminder',
+      identifier: 'burnttoast-builder-demo'
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const fields = [
+      'title', 'body', 'attribution', 'appLogo', 'heroImage', 'useColumns',
+      'columnLabel1', 'columnValue1', 'columnLabel2', 'columnValue2',
+      'columnLabel3', 'columnValue3', 'useProgress', 'useHeader',
+      'headerId', 'headerTitle', 'headerArguments', 'suppressPopup', 'urgent',
+      'progressValue', 'buttonText', 'buttonArgument', 'includeDismiss',
+      'includeInput', 'sound', 'identifier'
+    ];
+
+    let tone = defaults.tone;
+    const previewFiles = {
+      appLogo: null,
+      heroImage: null
+    };
+
+    function ps(value) {
+      return `'${String(value ?? '').replace(/'/g, "''")}'`;
+    }
+
+    function getState() {
+      const state = {};
+      for (const key of fields) {
+        const el = $(key);
+        state[key] = el.type === 'checkbox' ? el.checked : el.value;
+      }
+      state.progressValue = Number(state.progressValue);
+      state.tone = tone;
+      return state;
+    }
+
+    function setState(state) {
+      for (const key of fields) {
+        const el = $(key);
+        if (el.type === 'checkbox') {
+          el.checked = Boolean(state[key]);
+        } else {
+          el.value = state[key];
+        }
+      }
+      tone = state.tone;
+      document.querySelectorAll('.tone').forEach((button) => {
+        button.setAttribute('aria-pressed', String(button.dataset.tone === tone));
+      });
+      render();
+    }
+
+    function pathLooksUsable(path) {
+      return /^(https?:\/\/|[a-zA-Z]:\\|\\\\|\.{0,2}[\\/])/.test(path || '');
+    }
+
+    function previewSrc(path) {
+      if (/^[a-zA-Z]:\\/.test(path || '')) {
+        return `file:///${path.replace(/\\/g, '/')}`;
+      }
+      return path;
+    }
+
+    function columnRows(state) {
+      return [1, 2, 3].map((index) => ({
+        label: state[`columnLabel${index}`],
+        value: state[`columnValue${index}`]
+      })).filter((row) => row.label || row.value);
+    }
+
+    function renderPreview(state) {
+      $('previewTitle').textContent = state.title || 'Untitled toast';
+      $('previewBody').textContent = state.body || 'No body text';
+      $('previewAttribution').textContent = state.attribution || '';
+      $('previewHeader').classList.toggle('visible', state.useHeader);
+      $('previewHeaderTitle').textContent = state.headerTitle || state.headerId || 'Header';
+
+      const hero = $('previewHero');
+      const heroSource = previewFiles.heroImage || state.heroImage;
+      if (previewFiles.heroImage || pathLooksUsable(state.heroImage)) {
+        hero.src = previewSrc(heroSource);
+        hero.classList.add('visible');
+        hero.onerror = () => hero.classList.remove('visible');
+      } else {
+        hero.removeAttribute('src');
+        hero.classList.remove('visible');
+      }
+
+      const logo = $('previewLogo');
+      logo.innerHTML = '';
+      const logoSource = previewFiles.appLogo || state.appLogo;
+      if (previewFiles.appLogo || pathLooksUsable(state.appLogo)) {
+        const image = document.createElement('img');
+        image.src = previewSrc(logoSource);
+        image.alt = '';
+        image.onerror = () => {
+          logo.textContent = 'B';
+        };
+        logo.appendChild(image);
+      } else {
+        logo.textContent = 'B';
+      }
+
+      const columns = $('previewColumns');
+      columns.innerHTML = '';
+      for (const row of columnRows(state)) {
+        const dt = document.createElement('dt');
+        const dd = document.createElement('dd');
+        dt.textContent = row.label || 'Field';
+        dd.textContent = row.value || '';
+        columns.append(dt, dd);
+      }
+      columns.classList.toggle('visible', state.useColumns && columns.children.length > 0);
+      $('previewProgress').classList.toggle('visible', state.useProgress);
+      $('previewProgressLabel').textContent = `${state.progressValue}% complete`;
+      $('previewProgressBar').style.width = `${state.progressValue}%`;
+
+      const actions = $('previewActions');
+      actions.innerHTML = '';
+      if (state.includeInput) {
+        const input = document.createElement('button');
+        input.type = 'button';
+        input.textContent = 'Text input';
+        actions.appendChild(input);
+      }
+      const primary = document.createElement('button');
+      primary.type = 'button';
+      primary.textContent = state.buttonText || 'Action';
+      if (state.tone !== 'none') primary.className = state.tone;
+      actions.appendChild(primary);
+      if (state.includeDismiss) {
+        const dismiss = document.createElement('button');
+        dismiss.type = 'button';
+        dismiss.textContent = 'Dismiss';
+        actions.appendChild(dismiss);
+      }
+    }
+
+    function generateCode(state) {
+      const lines = [
+        'Import-Module BurntToast -RequiredVersion 2.0.0 -Force',
+        ''
+      ];
+
+      if (state.appLogo) {
+        lines.push(`$appLogo = ${ps(state.appLogo)}`);
+      }
+      if (state.heroImage) {
+        lines.push(`$heroImage = ${ps(state.heroImage)}`);
+      }
+      if (state.buttonText || state.includeInput) {
+        const color = state.tone === 'none' ? '' : ` -Color ${state.tone === 'green' ? 'Green' : 'Red'}`;
+        const buttonText = state.buttonText || 'Submit';
+        lines.push(`$primaryButton = New-BTButton -Content ${ps(buttonText)} -Arguments ${ps(state.buttonArgument || buttonText)}${color}`);
+      }
+      if (state.includeDismiss) {
+        lines.push(`$dismissButton = New-BTButton -Dismiss`);
+      }
+      if (state.includeInput) {
+        lines.push(`$noteInput = New-BTInput -Id 'note' -Title 'Add a note' -PlaceholderContent 'Type here'`);
+      }
+      if (state.useProgress) {
+        lines.push(`$progress = New-BTProgressBar -Title 'Progress' -Status ${ps(`${state.progressValue}% complete`)} -Value ${Number(state.progressValue / 100).toFixed(2)} -ValueDisplay ${ps(`${state.progressValue}%`)}`);
+      }
+      if (state.useHeader) {
+        lines.push(`$header = New-BTHeader -Id ${ps(state.headerId || 'burnttoast-builder')} -Title ${ps(state.headerTitle || 'BurntToast Builder')} -Arguments ${ps(state.headerArguments || '')}`);
+      }
+      if (state.useColumns) {
+        const rows = columnRows(state);
+        lines.push(`$leftColumn = New-BTColumn -Weight 4 -Children @(`);
+        for (const row of rows) {
+          lines.push(`    New-BTText -Text ${ps(row.label || 'Field')} -Style Base`);
+        }
+        lines.push(`)`);
+        lines.push(`$rightColumn = New-BTColumn -Weight 6 -Children @(`);
+        for (const row of rows) {
+          lines.push(`    New-BTText -Text ${ps(row.value || '')} -Style BaseSubtle`);
+        }
+        lines.push(`)`);
+      }
+
+      lines.push('');
+
+      if (state.includeInput) {
+        lines.push(`$actions = New-BTAction -Inputs $noteInput -Buttons @(`);
+        if (state.buttonText) lines.push(`    $primaryButton`);
+        if (state.includeDismiss) lines.push(`    $dismissButton`);
+        lines.push(`)`);
+        lines.push('');
+        lines.push(`$title = New-BTText -Text ${ps(state.title || 'Untitled toast')} -Style Header`);
+        lines.push(`$body = New-BTText -Text ${ps(state.body || '')} -Style Body -Wrap`);
+        lines.push(`$children = @($title, $body)`);
+        if (state.useProgress) lines.push(`$children += $progress`);
+        lines.push('');
+        lines.push(`$binding = @{`);
+        lines.push(`    Children = $children`);
+        if (state.appLogo) lines.push(`    AppLogoOverride = New-BTImage -Source $appLogo -AppLogoOverride -Crop Circle`);
+        if (state.heroImage) lines.push(`    HeroImage = New-BTImage -Source $heroImage -HeroImage`);
+        if (state.attribution) lines.push(`    Attribution = ${ps(state.attribution)}`);
+        if (state.useColumns) lines.push(`    Column = $leftColumn, $rightColumn`);
+        lines.push(`}`);
+        lines.push('');
+        lines.push(`$visual = New-BTVisual -BindingGeneric (New-BTBinding @binding)`);
+        lines.push('');
+        if (state.sound === 'Silent') {
+          lines.push(`$audio = New-BTAudio -Silent`);
+        } else if (state.sound !== 'Default') {
+          const looping = /^(Alarm|Call)/.test(state.sound);
+          const source = looping ? `ms-winsoundevent:Notification.Looping.${state.sound}` : `ms-winsoundevent:Notification.${state.sound}`;
+          lines.push(`$audio = New-BTAudio -Source ${ps(source)}${looping ? ' -Loop' : ''}`);
+        }
+        lines.push(`$content = @{`);
+        lines.push(`    Visual = $visual`);
+        lines.push(`    Actions = $actions`);
+        if (state.useHeader) lines.push(`    Header = $header`);
+        if (state.sound !== 'Default') lines.push(`    Audio = $audio`);
+        lines.push(`}`);
+        lines.push('');
+        lines.push(`$onActivated = {`);
+        lines.push(`    # The text box value is keyed by the input Id: 'note'.`);
+        lines.push(`    $Global:BurntToastInputData = $Global:ToastEvent`);
+        lines.push(`    $eventArgs = $Global:ToastEvent.SourceEventArgs`);
+        lines.push(`    if (-not $eventArgs -and $Global:ToastEvent.SourceArgs.Count) {`);
+        lines.push(`        $eventArgs = $Global:ToastEvent.SourceArgs[-1]`);
+        lines.push(`    }`);
+        lines.push(`    $Global:BurntToastNote = $eventArgs.UserInput['note']`);
+        lines.push(`}`);
+        lines.push('');
+        lines.push(`$submit = @{`);
+        lines.push(`    Content = New-BTContent @content`);
+        if (state.identifier) lines.push(`    UniqueIdentifier = ${ps(state.identifier)}`);
+        if (state.suppressPopup) lines.push(`    SuppressPopup = $true`);
+        if (state.urgent) lines.push(`    Urgent = $true`);
+        lines.push(`    ActivatedAction = $onActivated`);
+        lines.push(`    ReturnEventData = $true`);
+        lines.push(`}`);
+        lines.push('');
+        lines.push(`Submit-BTNotification @submit`);
+        return lines.join('\n');
+      }
+
+      lines.push(`$toast = @{`);
+      lines.push(`    Text = @(${ps(state.title || 'Untitled toast')}, ${ps(state.body || '')})`);
+      if (state.appLogo) lines.push(`    AppLogo = $appLogo`);
+      if (state.heroImage) lines.push(`    HeroImage = $heroImage`);
+      if (state.attribution) lines.push(`    Attribution = ${ps(state.attribution)}`);
+      if (state.useProgress) lines.push(`    ProgressBar = $progress`);
+      if (state.useHeader) lines.push(`    Header = $header`);
+      if (state.useColumns) lines.push(`    Column = $leftColumn, $rightColumn`);
+      if (state.buttonText || state.includeDismiss) {
+        const buttons = [];
+        if (state.buttonText) buttons.push('$primaryButton');
+        if (state.includeDismiss) buttons.push('$dismissButton');
+        lines.push(`    Button = ${buttons.join(', ')}`);
+      }
+      if (state.sound === 'Silent') {
+        lines.push(`    Silent = $true`);
+      } else if (state.sound !== 'Default') {
+        lines.push(`    Sound = ${ps(state.sound)}`);
+      }
+      if (state.identifier) lines.push(`    UniqueIdentifier = ${ps(state.identifier)}`);
+      if (state.suppressPopup) lines.push(`    SuppressPopup = $true`);
+      if (state.urgent) lines.push(`    Urgent = $true`);
+      lines.push(`}`);
+      lines.push('');
+
+      lines.push('New-BurntToastNotification @toast');
+      return lines.join('\n');
+    }
+
+    function render() {
+      const state = getState();
+      renderPreview(state);
+      $('code').textContent = generateCode(state);
+    }
+
+    async function copyCode() {
+      try {
+        await navigator.clipboard.writeText($('code').textContent);
+        $('copyStatus').textContent = 'Copied.';
+      } catch {
+        $('copyStatus').textContent = 'Select the code block and copy it manually.';
+      }
+      setTimeout(() => $('copyStatus').textContent = '', 1800);
+    }
+
+    for (const key of fields) {
+      $(key).addEventListener('input', render);
+      $(key).addEventListener('change', render);
+    }
+
+    document.querySelectorAll('.tone').forEach((button) => {
+      button.addEventListener('click', () => {
+        tone = button.dataset.tone;
+        document.querySelectorAll('.tone').forEach((item) => {
+          item.setAttribute('aria-pressed', String(item === button));
+        });
+        render();
+      });
+    });
+
+    function wireFilePicker(id, labelId) {
+      $(id).addEventListener('change', (event) => {
+        const file = event.target.files && event.target.files[0];
+        const key = id === 'appLogoFile' ? 'appLogo' : 'heroImage';
+        if (previewFiles[key]) {
+          URL.revokeObjectURL(previewFiles[key]);
+          previewFiles[key] = null;
+        }
+        if (file) {
+          previewFiles[key] = URL.createObjectURL(file);
+          $(labelId).textContent = `Previewing ${file.name}. Enter its real path above for generated code.`;
+        } else {
+          $(labelId).textContent = '';
+        }
+        render();
+      });
+    }
+
+    wireFilePicker('appLogoFile', 'appLogoFileName');
+    wireFilePicker('heroImageFile', 'heroImageFileName');
+
+    $('copyCode').addEventListener('click', copyCode);
+    $('copyTop').addEventListener('click', copyCode);
+    $('reset').addEventListener('click', () => setState(defaults));
+
+    setState(defaults);
+  </script>
+</body>
+</html>
