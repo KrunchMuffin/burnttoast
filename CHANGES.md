@@ -20,7 +20,17 @@
 
     - `Get-BTScriptBlockHash` now hashes the raw ScriptBlock source text rather than a lossy whitespace/case-collapsed form. This eliminates a class of false-positive hash collisions where visually different blocks were treated as duplicates. Whitespace and casing differences now correctly produce distinct hashes.
 
+    - `New-BurntToastNotification` now accepts `-Duration Short|Long`, allowing long toast display without requiring a looping alarm or call sound. Refs [#282](https://github.com/Windos/BurntToast/issues/282).
+
   - Bug Fixes
+
+    - Module import now uses CIM (`Win32_OperatingSystem.Version`) for OS version detection, with `[System.Environment]::OSVersion.Version` as a fallback. This avoids false Windows 8 detection in compatibility-wrapped PowerShell hosts. Refs [#287](https://github.com/Windos/BurntToast/issues/287).
+
+    - `Submit-BTNotification` now preserves static text fallback values recursively when `-DataBinding` is used, including text nested inside columns. This prevents unresolved placeholders from appearing for non-updated text elements. Refs [#289](https://github.com/Windos/BurntToast/issues/289).
+
+    - Activated action event data now includes the submitted `ToastNotification` object in `$Event.MessageData`, restoring access to toast XML content for event handlers. Refs [#288](https://github.com/Windos/BurntToast/issues/288).
+
+    - Removed stale `New-BTAudio` help that still claimed custom audio files were supported. Built-in Windows toast sounds remain supported. Refs [#272](https://github.com/Windos/BurntToast/issues/272).
 
     - `Update-BTNotification` had a duplicate `[CmdletBinding()]` decorator that was overriding the first one's `SupportsShouldProcess` and `HelpUri`. Removed.
 
